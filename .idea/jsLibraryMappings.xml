@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavaScriptLibraryMappings">
+    <file url="PROJECT" libraries="{bootstrap, d3.v3, easeljs-0.8.2, jquery-1.12.0, math, tweenjs-0.6.2}" />
+  </component>
+</project>

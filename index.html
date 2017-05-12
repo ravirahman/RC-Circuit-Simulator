@@ -1,0 +1,96 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+        <!-- Place favicon.ico in the root directory -->
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <link rel="stylesheet" href="css/normalize.css">
+        <link rel="stylesheet" href="css/main.css">
+        <script src="js/vendor/modernizr-2.8.3.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 8]>
+            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <div class="row">
+            <div class="col-md-8 column" id="content-column">
+                <ul class="nav nav-tabs">
+                    <li class="active">
+                        <a  href="#diagram" data-toggle="tab">Diagram</a>
+                    </li>
+                    <li><a href="#graphs" data-toggle="tab">Graphs</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content ">
+                    <div class="tab-pane active" id="diagram">
+                        <canvas id="canvas">
+
+                        </canvas>
+                    </div>
+                    <div class="tab-pane" id="graphs">
+                        <div id="functionPlot"></div>
+                        <div id="currentPlot"></div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4 column">
+                <div id="controls">
+                    <h2>Controls</h2>
+                    <form id="input-controls" action="#">
+                        <h3>Components</h3>
+                        <label for="voltage">Voltage (Volts):</label><br />
+                        <input type="text" id="voltage" value="10" /><br />
+                        <br />
+                        <label for="resistance">Resistance (Ohms):</label><br />
+                        <input type="text" id="resistance" value="100" /><br />
+                        <br />
+                        <label for="capacitance">Capacitance (Farad):</label><br />
+                        <input type="text" id="capacitance" value="1" /><br />
+                        <br />
+                        <h3>Conditions</h3>
+                        <label for="speed">Playback Speed:</label><br />
+                        <input type="text" id="speed" value="10" /><br />
+                        <br />
+                        <label for="speed">Charge Buildup on Capacitor (Coulombs):</label><br />
+                        <input type="text" id="q0" value="0" /><br />
+                        <br />
+                        <label for="t">Time Elapsed (Seconds):</label><br />
+                        <input type="text" id="t" value="0" /><br />
+                        <br />
+                        <button id="play">Run</button>
+                        <button id="pause" disabled="disabled">Pause</button>
+                        <button id="reset">Reset</button>
+                        <br />
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+
+        <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.12.3/math.min.js"></script>
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="http://maurizzzio.github.io/function-plot/js/function-plot.js"></script>
+
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+        <script src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
+        <script src="https://code.createjs.com/tweenjs-0.6.2.min.js"></script>
+        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.12.0.min.js"><\/script>')</script>
+        <script src="js/plugins.js"></script>
+        <script src="js/main.js"></script>
+
+
+    </body>
+</html>
