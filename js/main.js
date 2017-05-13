@@ -1,28 +1,50 @@
 $(function() {
-    console.log("page ready");
     var running = false;
 
-    var c = 1;
+    var c = 0.001;
     var v = 10;
-    var q0 = 0;
+    var q = 0; //this is the value shown to the user
+    var q0 = 0; //this is the value that we use in calculations
     var r = 100;
     var t = 0;
-    var starting_t = 0;
     var time_at_last_t = 0;
-    var speed = 10;
+    var speed = 0.01;
 
     var num_charges = 10;
-
 
     var voltageInput = $("#voltage");
     var resistanceInput = $("#resistance");
     var capacitanceInput = $("#capacitance");
     var speedInput = $("#speed");
-    var q0Input = $("#q0");
+    var qInput = $("#q");
     var tInput = $("#t");
 
     function updateGraph() {
-        functionPlot({
+        var tmin = 0; //t always starts at 0.
+        var tmax = Math.max((-1 * r * c * Math.log(Math.abs((0.1 * v * c)/(v * c - q0)))), (-1 * r * c * Math.log(Math.abs((10 * v * c)/(v * c - q0)))));
+
+        var chargeMin = calculateCharge(tmin);
+        var chargeMax = calculateCharge(tmax);
+
+        var vcmin = calculateVoltageOverCapicator(chargeMin);
+        var vrmin = calculateVoltageOverResistor(vcmin);
+
+        var vcmax = calculateVoltageOverCapicator(chargeMax);
+        var vrmax = calculateVoltageOverResistor(vcmax);
+
+        var vmin = Math.min(vcmin, vrmin, vcmax, vrmax, v);
+        var vmax = Math.max(vcmin, vrmin, vcmax, vrmax, v);
+        var buffer = (vmax - vmin) / 10;
+        vmin -= buffer;
+        vmax += buffer;
+
+        var cmin = Math.min(calculateCurrent(chargeMin), calculateCurrent(chargeMax));
+        var cmax = Math.max(calculateCurrent(chargeMin), calculateCurrent(chargeMax));
+        var cbuff = (cmax - cmin) / 10;
+        cmin -= cbuff;
+        cmax += cbuff;
+
+        var vf = functionPlot({
             target: '#functionPlot',
             title: "Voltages",
             //width: "100%",
@@ -43,12 +65,12 @@ $(function() {
             xAxis: {
                 type: 'linear',
                 label: 'Time (s)',
-                domain: [0, (-1 * r * c * Math.log((0.1 * v * c)/(v * c - q0)))] //go to the 70% value
+                domain: [tmin, tmax] //go to the 70% value
             },
             yAxis: {
                 type: 'linear',
                 label: 'Voltage (V)',
-                domain: [Math.min(0, v) * 1.1, Math.max(0, v) * 1.1]
+                domain: [vmin, vmax]
             },
             tip: {
                 xLine: true,    // dashed line parallel to y = 0
@@ -73,7 +95,7 @@ $(function() {
                 }
             }
         });
-        functionPlot({
+        var cf = functionPlot({
             target: '#currentPlot',
             title: "Current",
             //width: "100%",
@@ -85,12 +107,12 @@ $(function() {
             xAxis: {
                 type: 'linear',
                 label: 'Time (s)',
-                domain: [0, (-1 * r * c * Math.log((0.1 * v * c)/(v * c - q0)))]
+                domain: [tmin, tmax] //[0, Math.max((-1 * r * c * Math.log((0.1 * v * c)/(v * c - q))), 100)]
             },
             yAxis: {
                 type: 'linear',
                 label: 'Current (A)',
-                domain: [Math.min(0, v/r) * 1.1, Math.max(0, v/r) * 1.1]
+                domain: [cmin, cmax]
             },
             tip: {
                 xLine: true,    // dashed line parallel to y = 0
@@ -107,6 +129,8 @@ $(function() {
                 }
             }
         });
+        vf.addLink(cf);
+        cf.addLink(vf);
         return;
     }
     updateGraph();
@@ -136,7 +160,7 @@ $(function() {
     }
 
 
-    var inputs = [voltageInput, resistanceInput, capacitanceInput, speedInput, q0Input, tInput];
+    var inputs = [voltageInput, resistanceInput, capacitanceInput, speedInput, qInput, tInput];
 
     var doneTypingInterval = 500;  //time in ms, 5 second for example
 
@@ -165,22 +189,34 @@ $(function() {
                     if (v != voltageInput.val()) {
                         voltageInput.val(v);
                     }
+                    q0 = calculateQ0(q); //set the new q0 to what it would be
+                    // to maintain the current q given the change in voltage
                     updateGraph();
                     return;
                 }
                 if ($input === resistanceInput) {
                     r = parseFloat(resistanceInput.val()) || 0;
+                    if (r === 0) {
+                        r = 1;
+                    }
                     if (r != resistanceInput.val()) {
                         resistanceInput.val(r);
                     }
+                    q0 = calculateQ0(q); //set the new q0 to what it would be
+                    // to maintain the current q given the change in resistance
                     updateGraph();
                     return;
                 }
                 if ($input === capacitanceInput) {
                     c = parseFloat(capacitanceInput.val()) || 0;
+                    if (c === 0) {
+                        c = 1;
+                    }
                     if (c != capacitanceInput.val()) {
                         capacitanceInput.val(c);
                     }
+                    q0 = calculateQ0(q); //set the new q0 to what it would be
+                    // to maintain the current q given the change in c
                     updateGraph();
                     return;
                 }
@@ -192,23 +228,23 @@ $(function() {
                     updateGraph();
                     return;
                 }
-                if ($input === q0Input) {
-                    q0 = parseFloat(q0Input.val()) || 0;
-                    if (q0 != q0Input.val()) {
-                        q0Input.val(q0);
+                if ($input === qInput) {
+                    q = parseFloat(qInput.val()) || 0;
+                    if (q != qInput.val()) {
+                        qInput.val(q);
                     }
+                    q0 = calculateQ0(q); //set the new q0 to what it would be
+                    // to maintain the current q given the change in c
                     updateGraph();
                     return;
                 }
                 if ($input === tInput) {
-                    var new_starting_t = parseFloat(tInput.val()) || 0;
-                    t = new_starting_t - starting_t; //temporarily set t to the new value so we can calculate the change in charge
-                    q0 = calculateCharge();
-                    t = 0; //reset t back to 0.
-                    starting_t = new_starting_t;
-                    q0Input.val(q0);
-                    if (starting_t !== tInput.val()) {
-                        tInput.val(starting_t);
+                    t = parseFloat(tInput.val()) || 0;
+                    q = calculateCharge(t);
+                    qInput.val(q);
+                    //note that updating the time doesn't change what q0 is; you are simply moving up and down the graph
+                    if (t !== tInput.val()) {
+                        tInput.val(t);
                     }
                     updateGraph();
                     return;
@@ -216,8 +252,6 @@ $(function() {
 
             }
         })($input);
-
-
     }
 
     var voltColor = "#d9534f";
@@ -490,7 +524,7 @@ $(function() {
     var currentMeterShape = new createjs.Shape(currentMeter);
     stage.addChild(currentMeterShape);
 
-    var cd = new createjs.Graphics();
+    var cd = new createjs.Graphics(); //current direction
     cd.setStrokeStyle(1);
     cd.beginStroke(currentColor);
     cd.moveTo(x(-0.02), y(0.0));
@@ -532,12 +566,9 @@ $(function() {
     var capacitorShape = new createjs.Shape(capacitor);
     stage.addChild(capacitorShape);
 
-    var voltageUnit = math.unit(v + "V");
-    var voltageUnitsFormatted = voltageUnit.format(2); //format to two digits
-
 
     createjs.Ticker.addEventListener("tick", function() {
-        var voltageUnit = math.unit(v + "V");
+        var voltageUnit = math.unit(v + " V");
         var voltageUnitsFormatted = voltageUnit.format(3); //format to two digits
         var voltageUnitSplit = voltageUnitsFormatted.split(" ");
         supplyVoltmeterValue.text = Math.abs(voltageUnitSplit[0]);
@@ -556,13 +587,12 @@ $(function() {
             createjs.Tween.get(vsms).to({rotation: 180}, 200);
         }
 
-
-        var new_charge = calculateCharge(); //build it up on the plate
-        var new_current = calculateCurrent(new_charge); //this is proportional to velocity
-        var new_vc = calculateVoltageOverCapicator(new_charge);
+        q = calculateCharge(); //build it up on the plate
+        var new_current = calculateCurrent(q); //this is proportional to velocity
+        var new_vc = calculateVoltageOverCapicator(q);
         var new_vr = calculateVoltageOverResistor(new_vc);
 
-        var resistorVoltageUnit = math.unit(new_vr + "V");
+        var resistorVoltageUnit = math.unit(new_vr + " V");
         var resistorvoltageUnitsFormatted = resistorVoltageUnit.format(3); //format to two digits
         var rvoltageUnitSplit = resistorvoltageUnitsFormatted.split(" ");
         resistorVoltmeterValue.text = Math.abs(rvoltageUnitSplit[0]);
@@ -577,7 +607,7 @@ $(function() {
         }
 
 
-        var cVoltageUnit = math.unit(new_vc + "V");
+        var cVoltageUnit = math.unit(new_vc + " V");
         var cvoltageUnitsFormatted = cVoltageUnit.format(3); //format to two digits
         var cvoltageUnitSplit = cvoltageUnitsFormatted.split(" ");
         cVoltmeterValue.text = Math.abs(cvoltageUnitSplit[0]);
@@ -590,7 +620,7 @@ $(function() {
             createjs.Tween.get(cvdShape).to({rotation: 180}, 200);
         }
 
-        var cUnit = math.unit(new_current + "A");
+        var cUnit = math.unit(new_current + " A");
         var cUnitsFormatted = cUnit.format(3); //format to two digits
         var cUnitSplit = cUnitsFormatted.split(" ");
         cMeterValue.text = Math.abs(cUnitSplit[0]);
@@ -605,8 +635,10 @@ $(function() {
         }
 
         var max_charge = v * c; //cv=q
-        var expected_charges = Math.abs(Math.round(new_charge / max_charge * num_charges));
-        while (expected_charges < neg_charges.length) { //if you have too many, remove some!
+        var expected_charges = Math.min(Math.abs(Math.round((q / max_charge) * num_charges)), num_charges * 2);
+        //
+
+        while (expected_charges < neg_charges.length) { //if you have too many, remove some!. This should always be a continuous function
             removeCharge();
         }
         while (expected_charges > neg_charges.length) { //if you have too few, add some in!
@@ -616,16 +648,13 @@ $(function() {
 
         if (running) {
             var new_time = (new Date).getTime() / 1000;
-            if (time_at_last_t) {
-                var seconds_elapsed = new_time - time_at_last_t;
-                t += seconds_elapsed * speed; //set t to what it should be
-            }
-
-
+            var seconds_elapsed = new_time - time_at_last_t;
+            t += seconds_elapsed * speed; //set t to what it should be
             time_at_last_t = new_time;
-            tInput.val(parseFloat(t) + parseFloat(starting_t));
-            q0Input.val(new_charge);
+            tInput.val(t);
+            qInput.val(q); //the calculated charge
         }
+
         stage.update();
     });
 
@@ -749,10 +778,20 @@ $(function() {
 
     }
 
+    function calculateQ0(q, tp) {
+        if (!tp) {
+            tp = t;
+        }
+        var answer = (v * c + (q - v * c) * Math.exp(tp/(r * c)));
+        return answer;
+    }
 
-
-    function calculateCharge() {
-        return v * c + (q0 - v*c) * math.exp((-1 * t) / (r * c));
+    function calculateCharge(tp) {
+        if (!tp) {
+            tp = t;
+        }
+        var answer =  v * c + (q0 - v*c) * math.exp((-1 * tp) / (r * c));
+        return answer;
     }
 
     function chargefunc() {
@@ -764,7 +803,8 @@ $(function() {
             charge = calculateCharge();
         }
         //dq/dt = I = (CV-Q)/RC
-        return (c * v - charge) / (r * c);
+        var answer = (c * v - charge) / (r * c);
+        return answer;
     }
 
     function currentfunc() {
@@ -775,9 +815,10 @@ $(function() {
         if (!charge) {
             charge = calculateCharge();
         }
+        var answer = charge / c;
         //CV=Q
         //V=Q/C
-        return charge / c;
+        return answer;
     }
 
     function vcfunc() {
@@ -788,6 +829,7 @@ $(function() {
         if (!v_c) {
             v_c = calculateVoltageOverCapicator();
         }
+        var answer = v - v_c;
         return v - v_c;
     }
 
@@ -797,20 +839,20 @@ $(function() {
 
 
     $("#reset").click(function(){
+        q = 0;
         q0 = 0;
         v = 10;
         r = 100;
         running = false;
-        q0Input.prop('disabled', false);
+        qInput.prop('disabled', false);
         tInput.prop('disabled', false);
-        time_at_last_t = undefined;
-        c = 1;
-        speed = 0.1;
+        time_at_last_t = 0;
+        c = 0.001;
+        speed = 0.01;
         t = 0;
-        starting_t = 0;
         voltageInput.val(v);
         resistanceInput.val(r);
-        q0Input.val(q0);
+        qInput.val(q);
         tInput.val(t);
         capacitanceInput.val(c);
         speedInput.val(speed);
@@ -819,34 +861,19 @@ $(function() {
 
     $("#pause").click(function(){
         running = false;
-        time_at_last_t = undefined;
-        starting_t = parseFloat(tInput.val()) || 0;
-        q0 = calculateCharge();
-        t = 0;
-        q0Input.val(q0);
-        q0Input.prop('disabled', false);
+        qInput.prop('disabled', false);
         tInput.prop('disabled', false);
         $("#play").prop('disabled', false);
         $("#pause").prop('disabled', true);
     });
 
     $("#play").click(function(){
-        time_at_last_t = (new Date).getTime() / 1000;
-        t = 0;
-        running = true;
-        q0Input.prop('disabled', true);
+        time_at_last_t = parseInt((new Date).getTime() / 1000);
+        qInput.prop('disabled', true);
         tInput.prop('disabled', true);
         $("#play").prop('disabled', true);
         $("#pause").prop('disabled', false);
+        running = true;
+        //calculate what the real q should be given the current q and the time
     });
-
-
-
-    //now configure the graphs
-
 });
-
-
-
-
-
