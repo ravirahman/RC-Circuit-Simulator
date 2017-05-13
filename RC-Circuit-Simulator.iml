@@ -10,5 +10,6 @@
     <orderEntry type="library" name="math" level="application" />
     <orderEntry type="library" name="tweenjs-0.6.2" level="application" />
     <orderEntry type="library" name="d3.v3" level="application" />
+    <orderEntry type="library" name="function-plot" level="application" />
   </component>
 </module>
