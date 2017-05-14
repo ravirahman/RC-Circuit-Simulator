@@ -782,16 +782,14 @@ $(function() {
         if (!tp) {
             tp = t;
         }
-        var answer = (v * c + (q - v * c) * Math.exp(tp/(r * c)));
-        return answer;
+        return (v * c + (q - v * c) * Math.exp(tp / (r * c)));
     }
 
     function calculateCharge(tp) {
         if (!tp) {
             tp = t;
         }
-        var answer =  v * c + (q0 - v*c) * math.exp((-1 * tp) / (r * c));
-        return answer;
+        return v * c + (q0 - v * c) * math.exp((-1 * tp) / (r * c));
     }
 
     function chargefunc() {
@@ -803,8 +801,7 @@ $(function() {
             charge = calculateCharge();
         }
         //dq/dt = I = (CV-Q)/RC
-        var answer = (c * v - charge) / (r * c);
-        return answer;
+        return (c * v - charge) / (r * c);
     }
 
     function currentfunc() {
@@ -815,10 +812,7 @@ $(function() {
         if (!charge) {
             charge = calculateCharge();
         }
-        var answer = charge / c;
-        //CV=Q
-        //V=Q/C
-        return answer;
+        return charge / c;
     }
 
     function vcfunc() {
@@ -829,7 +823,6 @@ $(function() {
         if (!v_c) {
             v_c = calculateVoltageOverCapicator();
         }
-        var answer = v - v_c;
         return v - v_c;
     }
 
